@@ -5,7 +5,7 @@ from .noise_schedules import linear_schedule, cosine_schedule
 from .models import DDPM 
 from .cnn import CNN 
 
-def load_config(config_file):
+def load_config(config_file, project_root='.'):
 
     config = ConfigParser()
     config.read(config_file)
@@ -19,13 +19,13 @@ def load_config(config_file):
         "leaky_relu": nn.LeakyReLU,
         "elu": nn.ELU,
         "selu": nn.SELU,
-    }[config.get('main', 'activation', fallback="gelu")]
+    }[config.get('fundamental', 'activation', fallback="gelu")]
 
     # loss function
     criterion = {
         'MSE': nn.MSELoss(),
         'L1': nn.L1Loss()
-    }[config.get('main', 'criterion', fallback="MSE")]
+    }[config.get('fundamental', 'criterion', fallback="MSE")]
 
     # noise schedule
     if config['noise_schedule']['type'] == "linear":
@@ -53,10 +53,12 @@ def load_config(config_file):
     else:
         raise ValueError("Invalid optimizer type")
 
+    # model configuration
     cfg = {
-        'model_name': config['main']['model_name'],
-        'diffusion_type': config['main']['diffusion_type'], # 'ddpm' or 'cold'
-        'img_shape': eval(config.get('main', 'img_shape', fallback="(1, 28, 28)")),
+        'model_name': config['fundamental']['model_name'],
+        'diffusion_type': config['fundamental']['diffusion_type'], # 'ddpm' or 'cold'
+        'img_shape': eval(config.get('fundamental', 'img_shape', fallback="(1, 28, 28)")),
+        'use_accelerator': config.getboolean('fundamental', 'use_accelerator', fallback=True),
         'T': T,
         'n_epochs': config.getint('hyperparameters', 'n_epochs'),
         'batch_size': config.getint('hyperparameters', 'batch_size', fallback=64),
