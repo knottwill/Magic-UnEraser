@@ -43,7 +43,7 @@ class DDPM(nn.Module):
         """Algorithm 18.2 in Prince"""
 
         _one = torch.ones(n_sample, device=device)
-        z_t = torch.randn(n_sample, 1, *img_shape, device=device)
+        z_t = torch.randn(n_sample, *img_shape, device=device)
         for i in range(self.T, 0, -1):
             alpha_t = self.alpha_t[i]
             beta_t = self.beta_t[i]
