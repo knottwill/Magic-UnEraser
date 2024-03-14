@@ -41,7 +41,7 @@ class CNN(nn.Module):
     def __init__(
         self,
         in_channels,
-        expected_shape=(28, 28), # is this right? Do I need to include the channel dimension?
+        expected_shape=(28, 28),
         n_hidden=(64, 128, 64),
         kernel_size=7,
         last_kernel_size=3,
