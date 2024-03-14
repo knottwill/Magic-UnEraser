@@ -56,7 +56,7 @@ def load_config(config_file):
         'img_shape': eval(config.get('main', 'img_shape', fallback="(1, 28, 28)")),
         'T': T,
         'n_epochs': config.getint('hyperparameters', 'n_epochs'),
-        'batch_size': config.getint('hyperparameters', 'batch_size'),
+        'batch_size': config.getint('hyperparameters', 'batch_size', fallback=64),
         'n_hidden': eval(config.get('hyperparameters', 'n_hidden', fallback="(16, 32, 32, 16)")),
         'act': activation_func,
         'criterion': criterion,
@@ -67,3 +67,6 @@ def load_config(config_file):
 
     return cfg
     
+def get_config_string(config_file):
+    with open(config_file, 'r') as f:
+        return f.read()
