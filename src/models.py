@@ -39,7 +39,7 @@ class DDPM(nn.Module):
 
         return self.criterion(eps, self.net(z_t, t / self.T))
 
-    def sample(self, n_sample: int, img_shape, device) -> torch.Tensor:
+    def sample(self, n_sample: int, img_shape = (1, 28, 28), device = 'cpu') -> torch.Tensor:
         """Algorithm 18.2 in Prince"""
 
         _one = torch.ones(n_sample, device=device)

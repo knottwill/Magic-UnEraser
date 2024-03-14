@@ -21,8 +21,8 @@ def load_config(config_file):
 
     # loss function
     criterion = {
-        'MSE': nn.MSELoss,
-        'L1': nn.L1Loss
+        'MSE': nn.MSELoss(),
+        'L1': nn.L1Loss()
     }[config.get('main', 'criterion', fallback="MSE")]
 
     # noise schedule
@@ -67,6 +67,3 @@ def load_config(config_file):
 
     return cfg
     
-def get_config_string(config_file):
-    with open(config_file, 'r') as f:
-        return f.read()
