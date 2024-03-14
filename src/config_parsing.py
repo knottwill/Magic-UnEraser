@@ -2,6 +2,8 @@ from configparser import ConfigParser
 import torch
 import torch.nn as nn
 from .noise_schedules import linear_schedule, cosine_schedule
+from .models import DDPM 
+from .cnn import CNN 
 
 def load_config(config_file):
 
@@ -53,6 +55,7 @@ def load_config(config_file):
 
     cfg = {
         'model_name': config['main']['model_name'],
+        'diffusion_type': config['main']['diffusion_type'], # 'ddpm' or 'cold'
         'img_shape': eval(config.get('main', 'img_shape', fallback="(1, 28, 28)")),
         'T': T,
         'n_epochs': config.getint('hyperparameters', 'n_epochs'),
@@ -67,3 +70,14 @@ def load_config(config_file):
 
     return cfg
     
+def parse_config(config_file):
+    """Parse a config file and return a model with the specified hyperparameters."""
+
+    cfg = load_config(config_file)
+
+    net = CNN(in_channels=cfg['img_shape'][0], expected_shape=cfg['img_shape'][1:], n_hidden=cfg["n_hidden"], act=cfg["act"])
+
+    if cfg['diffusion_type'] == "ddpm":
+        model = DDPM(net, noise_schedule=cfg['noise_schedule'], criterion=cfg["criterion"])
+    
+    return model
