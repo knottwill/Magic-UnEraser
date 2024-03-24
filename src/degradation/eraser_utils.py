@@ -83,7 +83,7 @@ def disk_mask(pixel, radius, size):
     @return: A tensor of shape (1, size, size) containing the mask.
     """
     # create meshgrid
-    rr, cc = torch.meshgrid(torch.arange(size), torch.arange(size))
+    rr, cc = torch.meshgrid(torch.arange(size), torch.arange(size), indexing='ij')
 
     # calculate distance from center
     distance = ((rr - pixel[0])**2 + (cc - pixel[1])**2).float().sqrt()
@@ -105,7 +105,7 @@ def gaussian_mask(pixel, sigma, size):
     """
 
     # create meshgrid
-    rr, cc = torch.meshgrid(torch.arange(size), torch.arange(size))
+    rr, cc = torch.meshgrid(torch.arange(size), torch.arange(size), indexing='ij')
 
     # calculate gaussian mask
     dY = rr - pixel[0]

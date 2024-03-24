@@ -9,6 +9,7 @@ from torchvision.datasets import MNIST
 from torch.utils.data import DataLoader
 from torchvision.utils import save_image, make_grid
 from accelerate import Accelerator
+from PIL import Image
 
 from src.config_parsing import parse_config
 
@@ -38,6 +39,19 @@ if cfg['use_accelerator']:
 else:
     device = torch.device('cpu')
 
+def tensor_to_gif(tensor, gif_path):
+    # Ensure tensor is CPU and numpy
+    tensor = tensor.cpu().detach()
+    
+    images = [Image.fromarray((255 * tensor[i].squeeze().numpy()).astype('uint8'), mode='L') for i in range(tensor.size(0))]
+    
+    # Save the images as a GIF
+    images[0].save(gif_path, save_all=True, append_images=images[1:], duration=30, loop=0)
+
+def reconstruction_gif(Zs, path):
+    for e, Z in enumerate(Zs):
+        tensor_to_gif(Z, f"{path}reconstruction_{e}.gif")
+
 # train model
 metric_logger = {}
 losses = []
@@ -61,17 +75,20 @@ for i in range(cfg['n_epochs']):
 
     model.eval()
     with torch.no_grad():
-        xh = model.sample(n_sample=16, img_shape=(1, 28, 28), device=device) 
-        grid = make_grid(xh, nrow=4)
+        Zs = model.sample(n_sample=16, img_shape=(1, 28, 28), device=device, visualise=True) 
+        reconstruction_gif(Zs, f"{results_dir}/samples/epoch_{i:04d}_")
 
-        # save samples
-        save_image(grid, os.path.join(results_dir, 'samples', f"epoch_{i:04d}.png"))
 
-        # save model
-        torch.save(model.state_dict(), os.path.join(results_dir, "state_dict.pth"))
+        # grid = make_grid(xh, nrow=4)
 
-        # save losses
-        metric_logger['loss'] = losses
-        with open(os.path.join(results_dir, "log.pkl"), "wb") as f:
-            pickle.dump(metric_logger, f)
+        # # save samples
+        # save_image(grid, os.path.join(results_dir, 'samples', f"epoch_{i:04d}.png"))
+
+        # # save model
+        # torch.save(model.state_dict(), os.path.join(results_dir, "state_dict.pth"))
+
+        # # save losses
+        # metric_logger['loss'] = losses
+        # with open(os.path.join(results_dir, "log.pkl"), "wb") as f:
+        #     pickle.dump(metric_logger, f)
 
