@@ -10,18 +10,13 @@ from torch.utils.data import DataLoader
 from torchvision.utils import save_image, make_grid
 from accelerate import Accelerator
 
-from src.config_parsing import load_config
+from src.config_parsing import parse_config
 from src.cnn import CNN
 from src.models import DDPM
 
-# load config file
+# parse config file
 cfg_file = sys.argv[1]
-cfg = load_config(cfg_file)
-
-# create cnn, diffusion model and optimizer
-net = CNN(in_channels=cfg['img_shape'][0], expected_shape=cfg['img_shape'][1:], n_hidden=cfg["n_hidden"], act=cfg["act"])
-ddpm = DDPM(net, noise_schedule=cfg['noise_schedule'], criterion=cfg["criterion"])
-optim = cfg['optimizer'](ddpm.parameters(), **cfg['optim_hparams'])
+cfg, ddpm, optim = parse_config(cfg_file)
 
 # load data
 tf = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (1.0))])
