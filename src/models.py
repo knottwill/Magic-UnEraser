@@ -1,6 +1,7 @@
 from typing import Dict
 import torch
 import torch.nn as nn
+from .degradation.base import DegredationOperator
 
 
 class DDPM(nn.Module):
@@ -58,3 +59,66 @@ class DDPM(nn.Module):
             # (We don't add noise at the final step - i.e., the last line of the algorithm)
 
         return z_t
+    
+
+class ColdDiffusion(nn.Module):
+
+    def __init__(
+        self,
+        reconstructor: nn.Module,
+        degrador: DegredationOperator,
+        criterion: nn.Module = nn.MSELoss(),
+        T: int = 1000,
+    ) -> None:
+        super().__init__()
+
+        self.degrador = degrador
+        self.reconstructor = reconstructor
+
+        self.T = T
+        self.criterion = criterion
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+
+        t = torch.randint(1, self.T + 1, (x.size(0),), device=x.device)
+        s = t / self.T # severity
+
+        z_t = self.degrador(x, s) # encoder
+        x_recon = self.reconstructor(z_t, s) # decoder
+
+        return nn.MSELoss()(x_recon, x)
+    
+    def sample(self, n_sample: int, img_shape = (1, 28, 28), device = 'cpu', cold_algorithm: bool = True, visualise: bool = False) -> torch.Tensor:
+
+        self.degrador.sampling(True) # set degrador sampling mode to True
+
+        _ones = torch.ones(n_sample, device=device)
+        z_T = self.degrador.latent_sampler(n_sample, img_shape, device)
+
+        z_t_sub_one = z_T
+        Zs = torch.tensor([])
+        for t in range(self.T, 0, -1):
+            z_t = z_t_sub_one
+
+            # detach z_t and concatenate to Z
+            if visualise:
+                Zs = torch.cat((Zs, z_t.detach().cpu()), dim=1)
+                
+            x_recon = self.reconstructor(z_t, (t * _ones)/self.T)
+
+            if t > 1:
+
+                d_t_sub_one = self.degrador(x_recon, ((t - 1) * _ones)/self.T)
+                if cold_algorithm:
+                    d_t = self.degrador(x_recon, (t * _ones)/self.T)
+                    z_t_sub_one = z_t - d_t + d_t_sub_one
+                else:
+                    z_t_sub_one = d_t_sub_one
+            
+        self.degrador.sampling(False) # set degrador sampling mode to False
+
+        if visualise:
+            Zs = torch.cat((Zs, x_recon.detach().cpu()), dim=1)
+            return Zs
+        
+        return x_recon
