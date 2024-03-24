@@ -29,7 +29,7 @@ class CNNBlock(nn.Module):
 
         self.net = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size, padding=kernel_size // 2),
-            nn.LayerNorm(expected_shape),
+            nn.LayerNorm((out_channels, *expected_shape)),
             act()
         )
 
