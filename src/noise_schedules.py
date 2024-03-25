@@ -11,18 +11,10 @@ def linear_schedule(beta1: float, beta2: float, T: int) -> Dict[str, torch.Tenso
 
     return {"beta_t": beta_t, "alpha_t": alpha_t}
 
-# def linear_schedule(beta_1: float, beta_T: float, T: int) -> Dict[str, torch.Tensor]:
-#     """Returns pre-computed schedules for DDPM sampling with a linear noise schedule."""
-#     assert 0 < beta_1 < beta_T < 1.0, "beta_1 and beta_T must be in (0, 1)"
-
-#     beta_t = (beta_T - beta_1) * torch.arange(0, T, dtype=torch.float32) / T + beta_1
-#     beta_t = torch.cat([torch.tensor([0.]), beta_t], dim=0)
-#     alpha_t = torch.exp(torch.cumsum(torch.log(1 - beta_t), dim=0))  # Cumprod in log-space (better precision)
-
-#     return {"beta_t": beta_t, "alpha_t": alpha_t}
-
 def cosine_schedule(T: int, s: float = 0.002) -> dict:
     """Returns pre-computed schedules for DDPM sampling with a cosine noise schedule.
+
+    Unfortunately not working & don't have time to debug it :(
 
     https://arxiv.org/pdf/2102.09672.pdf
     
