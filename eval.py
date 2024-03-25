@@ -1,3 +1,13 @@
+"""!@file eval.py
+
+@brief Evaluation script for trained diffusion model
+
+@details This script generates samples from the trained model and 
+computes the FID score between the generated samples and the MNIST test set.
+However many samples are generated, the FID score is computed on the same number of samples
+from the MNIST test set.
+"""
+
 import numpy as np
 import torch
 import argparse

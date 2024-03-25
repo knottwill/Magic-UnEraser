@@ -9,9 +9,9 @@ from .degradation.eraser_utils import eraser_trajectory
 
 def parse_degradation_config(config):
 
-    # diffusion type ('ddpm' or 'cold' diffusion)
     diffusion_type = config['fundamental']['diffusion_type']
     img_shape = eval(config.get('fundamental', 'img_shape', fallback="(1, 28, 28)"))
+    T = config.getint('hyperparameters', 'T')
 
     # noise schedule
     if diffusion_type == "ddpm": # only ddpm has noise schedule
@@ -99,7 +99,7 @@ def parse_config(config_file):
         raise ValueError("Invalid optimizer type")
     
     # other important arguments
-    args = {
+    cfg = {
         'model_name': config['fundamental']['model_name'],
         'use_accelerator': config.getboolean('fundamental', 'use_accelerator', fallback=True),
         'T': T,
@@ -109,4 +109,4 @@ def parse_config(config_file):
     }
 
     # return configuration, model and optimizer
-    return args, model, optimizer
+    return cfg, model, optimizer

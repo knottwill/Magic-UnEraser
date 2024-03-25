@@ -40,11 +40,12 @@ class DDPM(nn.Module):
 
         return self.criterion(eps, self.net(z_t, t / self.T))
 
-    def sample(self, n_sample: int, img_shape = (1, 28, 28), device = 'cpu') -> torch.Tensor:
+    def sample(self, n_sample: int, img_shape = (1, 28, 28), device = 'cpu', visualise=False) -> torch.Tensor:
         """Algorithm 18.2 in Prince"""
 
         _one = torch.ones(n_sample, device=device)
         z_t = torch.randn(n_sample, *img_shape, device=device)
+        Zs = torch.tensor([])
         for i in range(self.T, 0, -1):
             alpha_t = self.alpha_t[i]
             beta_t = self.beta_t[i]
@@ -53,11 +54,17 @@ class DDPM(nn.Module):
             z_t -= (beta_t / torch.sqrt(1 - alpha_t)) * self.net(z_t, (i/self.T) * _one)
             z_t /= torch.sqrt(1 - beta_t)
 
+            if visualise:
+                Zs = torch.cat((Zs, z_t.detach().cpu()), dim=1)
+
             if i > 1:
                 # Last line of loop:
                 z_t += torch.sqrt(beta_t) * torch.randn_like(z_t)
             # (We don't add noise at the final step - i.e., the last line of the algorithm)
 
+        if visualise:
+            return Zs
+        
         return z_t
     
 
