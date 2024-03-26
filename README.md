@@ -29,6 +29,10 @@ Project structure
 
 ## Usage / Re-Production
 
+#### 1. Set-up
+
+#### 2. Training
+
 We trained three models: DDPM model with default hyperparameters. DDPM model with twice the model capacity. Cold diffusion model using the 'Eraser' degradation strategy (& otherwise the same hyperparameters as the default DDPM). 
 
 ```bash
@@ -40,9 +44,15 @@ $ python train.py ./configs/magic_uneraser.ini  # Magic Uneraser :)
 To evaluate the models, we generate 100 samples and calculate the FID score between the samples 
 
 ```bash
-$ python eval.py --model_dir ./models/ddpm_default --output_dir plots
-$ python eval.py --model_dir ./models/ddpm_high --output_dir plots
-$ python eval.py --model_dir ./models/magic_uneraser --output_dir plots
+$ python eval.py --model_dir ./models/ddpm_default --output_dir ./plots
+$ python eval.py --model_dir ./models/ddpm_high --output_dir ./plots
+$ python eval.py --model_dir ./models/magic_uneraser --output_dir ./plots
+```
+
+To make the plots
+
+```bash
+$ python make_plots.py --models ./models --output_dir ./plots
 ```
 
 ## Timing

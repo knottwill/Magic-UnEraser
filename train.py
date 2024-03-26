@@ -33,7 +33,6 @@ test_loader = DataLoader(testset, batch_size=cfg['batch_size'], shuffle=False, d
 
 # create directory to save model state dict, samples, logs and config file
 results_dir = os.path.join("./models", cfg['model_name'])
-os.makedirs(results_dir, exist_ok=True)
 os.makedirs(os.path.join(results_dir, "samples"), exist_ok=True)
 
 # save config file in results directory for safety
