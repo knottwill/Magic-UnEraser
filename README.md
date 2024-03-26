@@ -6,6 +6,8 @@
 
 ## Description
 
+In this project we train a diffusion model to reverse the custom 'Eraser' image degradation process.
+
 <details open>
 <summary><b>Toggle Degradation/Reconstruction</b></summary>
 <br>
@@ -15,21 +17,33 @@
         <img id="degradationGif" src="plots/degradation.gif" alt="Degradation" style="width: 200px;">
     </div>
     <div style="text-align: center;">
-        <p style="font-size: 18px; font-family: Arial, sans-serif; color: green; margin-bottom: 20px;">Reconstruction</p>
+        <p style="font-size: 18px; font-family: Arial, sans-serif; color: green; margin-bottom: 20px;">Generation</p>
         <img id="reconstructionGif" src="plots/reconstruction.gif" alt="Reconstruction" style="width: 200px;">
     </div>
 </div>
 </details>
 
+Project structure
+- `configs/` - Contains model configurations
+- 
 
-## Usage / Re-production
+## Usage / Re-Production
+
+We trained three models: DDPM model with default hyperparameters. DDPM model with twice the model capacity. Cold diffusion model using the 'Eraser' degradation strategy (& otherwise the same hyperparameters as the default DDPM). 
 
 ```bash
-$ python train.py ./configs/ddpm_default.ini
-$ python train.py ./configs/ddpm_cos.ini
-$ python train.py ./configs/cold.ini
+$ python train.py ./configs/ddpm_default.ini    # default DDPM
+$ python train.py ./configs/ddpm_high.ini       # high capacity DDPM
+$ python train.py ./configs/magic_uneraser.ini  # Magic Uneraser :)
 ```
 
+To evaluate the models, we generate 100 samples and calculate the FID score between the samples 
+
+```bash
+$ python eval.py --model_dir ./models/ddpm_default --output_dir plots
+$ python eval.py --model_dir ./models/ddpm_high --output_dir plots
+$ python eval.py --model_dir ./models/magic_uneraser --output_dir plots
+```
 
 ## Timing
 

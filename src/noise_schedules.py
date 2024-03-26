@@ -1,9 +1,15 @@
+"""!@file noise_schedules.py
+
+@brief Functions for generating noise schedules for DDPM sampling.
+"""
 from typing import Dict
 import torch
 import numpy as np
 
 def linear_schedule(beta1: float, beta2: float, T: int) -> Dict[str, torch.Tensor]:
-    """Returns pre-computed schedules for DDPM sampling with a linear noise schedule."""
+    """!
+    @brief Returns pre-computed schedules for DDPM sampling with a linear noise schedule.
+    """
     assert beta1 < beta2 < 1.0, "beta1 and beta2 must be in (0, 1)"
 
     beta_t = (beta2 - beta1) * torch.arange(0, T + 1, dtype=torch.float32) / T + beta1
@@ -12,9 +18,10 @@ def linear_schedule(beta1: float, beta2: float, T: int) -> Dict[str, torch.Tenso
     return {"beta_t": beta_t, "alpha_t": alpha_t}
 
 def cosine_schedule(T: int, s: float = 0.002) -> dict:
-    """Returns pre-computed schedules for DDPM sampling with a cosine noise schedule.
+    """!
+    @brief Returns pre-computed schedules for DDPM sampling with a cosine noise schedule.
 
-    Unfortunately not working & don't have time to debug it :(
+    @details Unfortunately not working & don't have time to debug it :(
 
     https://arxiv.org/pdf/2102.09672.pdf
     
@@ -33,7 +40,6 @@ def cosine_schedule(T: int, s: float = 0.002) -> dict:
     def f(t):
         return torch.pow(torch.cos((t/T + s) / (1 + s) * np.pi / 2), 2)
     
-    
     timesteps = torch.arange(1, T + 1, dtype=torch.int64)
 
     alpha_t = f(timesteps)/f(torch.tensor(0))
@@ -44,7 +50,5 @@ def cosine_schedule(T: int, s: float = 0.002) -> dict:
 
     # clip beta_t
     beta_t = torch.clamp(beta_t, 0.0, 0.999)
-
-    # alpha_t = torch.exp(torch.cumsum(torch.log(1 - beta_t), dim=0))
 
     return {"beta_t": beta_t, "alpha_t": alpha_t}

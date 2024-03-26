@@ -17,12 +17,14 @@ from torchvision import transforms
 from torchvision.datasets import MNIST
 from torchvision.utils import save_image, make_grid
 from torchmetrics.image.fid import FrechetInceptionDistance
+from tqdm import tqdm
 
 from src.config_parsing import parse_config
 
 # parse args
 parser = argparse.ArgumentParser()
 parser.add_argument("--model_dir", type=str, help="Directory containing model config and state_dict.pth file")
+parser.add_argument("--output_dir", type=str, help="Directory to output plots in")
 parser.add_argument("--n_samples", default=100, type=int, help="Number of samples to draw from the model")
 args = parser.parse_known_args()[0]
 
@@ -30,16 +32,21 @@ args = parser.parse_known_args()[0]
 cfg, model, _ = parse_config(join(args.model_dir, 'config.ini'))
 model.load_state_dict(torch.load(join(args.model_dir, 'state_dict.pth')))
 
+# print number of model parameters
+n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+print(f"Number of model parameters: {n_params}\n")
+
 # unconditional generation
+print(f"Generating {args.n_samples} samples...")
 model.eval()
 with torch.no_grad():
     x_gen = model.sample(args.n_samples, (1, 28, 28), torch.device('cpu'))  # Can get device explicitly with `accelerator.device`
 
     # Save samples to `./contents` directory
     grid = make_grid(x_gen, nrow=int(np.sqrt(args.n_samples)))
-    save_image(grid, join(args.model_dir, 'final_samples.png'))
+    save_image(grid, join(args.output_dir, f'{cfg['model_name']}_samples.png'))
 
-print(f"{args.n_samples} Samples saved to {join(args.model_dir, 'final_samples.png')}\n")
+print(f"{args.n_samples} Samples saved to {join(args.output_dir, f'{cfg['model_name']}_samples.png')}\n")
 
 ############
 # FID Score
@@ -50,7 +57,7 @@ print(f"{args.n_samples} Samples saved to {join(args.model_dir, 'final_samples.p
 # Load MNIST test set
 tf = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (1.0)),])
 testset = MNIST("./data", train=False, download=True, transform=tf)
-dataloader = DataLoader(testset, batch_size=args.n_samples, shuffle=True)
+dataloader = DataLoader(testset, batch_size=500, shuffle=True)
 
 # (N, 1, 28, 28) in [-0.5, 0.5] -> (N, 3, 299, 299) in [-1, 1]
 transform_for_inceptionv3 = transforms.Compose([
@@ -60,8 +67,10 @@ transform_for_inceptionv3 = transforms.Compose([
 ])
 
 # feature = 64, 192, 768 or 2048 (2048 is default, and used in cold diffusion paper)
+print("Computing FID score...")
 fid = FrechetInceptionDistance(feature=2048)
 
+torch.manual_seed(0)
 for real_images, _ in dataloader:
     real_images = transform_for_inceptionv3(real_images)
     fid.update(real_images, real=True)

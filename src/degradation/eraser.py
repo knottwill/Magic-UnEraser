@@ -37,17 +37,19 @@ class Eraser(DegredationOperator):
     def __call__(self, x: torch.Tensor, s: torch.Tensor):
         """
         s - severity (t/T) in [0, 1]
+
+        The index of the mask to apply is given by s * M, where M is the number of pixels/masks in the trajectory.
         """
 
-        B, C, H, W = x.shape
+        batch_size, C, H, W = x.shape
 
-        # if we are sampling, the colour and noise should be fixed
+        # if we are sampling, the colour should already be specified
         if self.sampling_mode: 
-            colours = self.mask_colours
-            noise = self.noise
+            background = self.background
         else:
-            colours = torch.rand((B,), device=x.device) - 0.5
+            colours = torch.rand((batch_size,), device=x.device) - 0.5
             noise = torch.randn_like(x, device=x.device) * self.noise_std
+            background = colours.view(-1, 1, 1, 1) + noise
 
         # get mask
         indices = torch.round(self.masks.shape[0]*s)
@@ -55,32 +57,22 @@ class Eraser(DegredationOperator):
         mask = self.masks[indices, :, :, :]
 
         # apply mask
-        degraded_x = x * mask + colours.view(-1, 1, 1, 1) * (1 - mask)
+        degraded_x = x * mask + background * (1 - mask)
 
         # round all pixel values to the 8 most significant digits 
         # to avoid information leakage due to floating point errors
         degraded_x = (degraded_x * 1e8).round() / 1e8
-
-        # add a small amount of noise to the fully-masked pixels
-        noise = noise * (1 - mask)
-        # noise = noise * (mask == 0)
-
-        degraded_x = degraded_x + noise
 
         return degraded_x
     
     def latent_sampler(self, n_sample, img_shape, device):
 
         colours = torch.rand((n_sample,), device=device) - 0.5
-        noise = torch.randn(n_sample, *img_shape, device=device) * self.noise_std
+        noise = torch.randn((n_sample, *img_shape), device=device) * self.noise_std
+        background = colours.view(-1, 1, 1, 1) + noise
 
-        # if we are sampling, we fix the colour and noise for the whole process
+        # if we are sampling, we fix the colour for the whole process
         if self.sampling_mode:
-            self.mask_colours = colours
-            self.noise = noise
+            self.background = background
 
-        empty_img = torch.full((n_sample, *img_shape), -0.5, device=device)
-        final_mask = self.masks[-1].repeat(n_sample, 1, 1, 1)
-        base = empty_img * final_mask + colours.view(-1, 1, 1, 1) * (1 - final_mask)
-
-        return base + noise
+        return background
