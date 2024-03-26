@@ -1,3 +1,10 @@
+"""!@file models.py
+
+@brief Diffusion models for image generation
+
+@details This file contains the implementation of the DDPM and Cold Diffusion models.
+"""
+
 from typing import Dict
 import torch
 import torch.nn as nn
@@ -26,8 +33,7 @@ class DDPM(nn.Module):
         self.criterion = criterion
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Algorithm 18.1 in Prince
-        x ~ (batch_size, 1, H W)
+        """! @brief Algorithm 18.1 in Prince
         """
 
         t = torch.randint(1, self.T + 1, (x.size(0),), device=x.device)
@@ -41,11 +47,11 @@ class DDPM(nn.Module):
         return self.criterion(eps, self.net(z_t, t / self.T))
 
     def sample(self, n_sample: int, img_shape = (1, 28, 28), device = 'cpu', visualise=False) -> torch.Tensor:
-        """Algorithm 18.2 in Prince"""
+        """! @brief Algorithm 18.2 in Prince"""
 
         _one = torch.ones(n_sample, device=device)
         z_t = torch.randn(n_sample, *img_shape, device=device)
-        Zs = torch.tensor([])
+        latents = torch.tensor([])
         for i in range(self.T, 0, -1):
             alpha_t = self.alpha_t[i]
             beta_t = self.beta_t[i]
@@ -55,7 +61,7 @@ class DDPM(nn.Module):
             z_t /= torch.sqrt(1 - beta_t)
 
             if visualise:
-                Zs = torch.cat((Zs, z_t.detach().cpu()), dim=1)
+                latents = torch.cat((latents, z_t.detach().cpu()), dim=1)
 
             if i > 1:
                 # Last line of loop:
@@ -63,12 +69,15 @@ class DDPM(nn.Module):
             # (We don't add noise at the final step - i.e., the last line of the algorithm)
 
         if visualise:
-            return Zs
+            return latents
         
         return z_t
     
 
 class ColdDiffusion(nn.Module):
+    """!
+    @brief Cold Diffusion model as described in Bansal et al. (2021)
+    """
 
     def __init__(
         self,
@@ -79,11 +88,11 @@ class ColdDiffusion(nn.Module):
     ) -> None:
         super().__init__()
 
-        self.degrador = degrador
-        self.reconstructor = reconstructor
+        self.degrador = degrador # degradation operator
+        self.reconstructor = reconstructor # decoder network
 
-        self.T = T
-        self.criterion = criterion
+        self.T = T # number of steps
+        self.criterion = criterion # loss function
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
 
@@ -95,7 +104,10 @@ class ColdDiffusion(nn.Module):
 
         return nn.MSELoss()(x_recon, x)
     
-    def sample(self, n_sample: int, img_shape = (1, 28, 28), device = 'cpu', cold_algorithm: bool = True, visualise: bool = False) -> torch.Tensor:
+    def sample(self, n_sample: int, img_shape = (1, 28, 28), device = 'cpu', visualise: bool = False) -> torch.Tensor:
+        """!
+        @brief Sample from the model using Bansal et al. (2021) Algorithm 2: Improved Sampling for Cold Diffusion
+        """
 
         self.degrador.sampling(True) # set degrador sampling mode to True
 
@@ -103,29 +115,24 @@ class ColdDiffusion(nn.Module):
         z_T = self.degrador.latent_sampler(n_sample, img_shape, device)
 
         z_t_sub_one = z_T
-        Zs = torch.tensor([])
+        latents = torch.tensor([]) # tensor containing all latent states for visualisation
         for t in range(self.T, 0, -1):
             z_t = z_t_sub_one
 
-            # detach z_t and concatenate to Z
-            if visualise:
-                Zs = torch.cat((Zs, z_t.detach().cpu()), dim=1)
+            if visualise: # if visualising, store all latent states
+                latents = torch.cat((latents, z_t.detach().cpu()), dim=1)
                 
             x_recon = self.reconstructor(z_t, (t * _ones)/self.T)
 
             if t > 1:
+                z_t_sub_one = z_t - self.degrador(x_recon, (t * _ones)/self.T) + self.degrador(x_recon, ((t - 1) * _ones)/self.T)
 
-                d_t_sub_one = self.degrador(x_recon, ((t - 1) * _ones)/self.T)
-                if cold_algorithm:
-                    d_t = self.degrador(x_recon, (t * _ones)/self.T)
-                    z_t_sub_one = z_t - d_t + d_t_sub_one
-                else:
-                    z_t_sub_one = d_t_sub_one
             
         self.degrador.sampling(False) # set degrador sampling mode to False
 
-        if visualise:
-            Zs = torch.cat((Zs, x_recon.detach().cpu()), dim=1)
-            return Zs
+        if visualise: # return all latent states for visualisation
+            latents = torch.cat((latents, x_recon.detach().cpu()), dim=1)
+            return latents
         
+        # else just return the final reconstructions
         return x_recon

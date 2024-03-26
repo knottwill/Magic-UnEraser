@@ -1,7 +1,11 @@
-"""
-We create a simple 2D convolutional neural network. This network
-is essentially going to try to estimate the diffusion process --- we
-can then use this network to generate realistic images.
+"""!@file cnn.py
+
+@brief We create a simple 2D convolutional neural network to use as the reconstructor
+network within the diffusion models. 
+
+@details The CNN is a stack of convolutional blocks, each of which consists of a
+convolutional layer, followed by a layer normalization and a GELU activation.
+
 
 First, we create a single CNN block which we will stack to create the
 full network. We use `LayerNorm` for stable training and no batch dependence.
