@@ -62,7 +62,8 @@ class Eraser(DegredationOperator):
         degraded_x = (degraded_x * 1e8).round() / 1e8
 
         # add a small amount of noise to the fully-masked pixels
-        noise = noise * (mask == 0)
+        noise = noise * (1 - mask)
+        # noise = noise * (mask == 0)
 
         degraded_x = degraded_x + noise
 
