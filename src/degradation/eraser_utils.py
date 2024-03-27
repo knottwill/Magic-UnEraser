@@ -1,4 +1,5 @@
 """!@file eraser_utils.py
+
 @brief Contains all utility functions for the Eraser Degredation Operator
 """
 from skimage.draw import line

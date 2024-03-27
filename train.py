@@ -3,9 +3,12 @@
 @brief Script to train diffusion model on MNIST dataset
 
 @details The model is specified in the config file. It can be cold diffusion or DDPM.
+
+Example usage:
+`python train.py ./configs/ddpm_default.ini`
 """
 
-import sys 
+import sys
 import os
 import pickle
 from tqdm import tqdm
@@ -16,9 +19,14 @@ from torchvision.datasets import MNIST
 from torch.utils.data import DataLoader
 from torchvision.utils import save_image, make_grid
 from accelerate import Accelerator
-from PIL import Image
+from time import time
 
 from src.config_parsing import parse_config
+
+SEED = 42
+torch.manual_seed(SEED)
+np.random.seed(SEED)
+t0 = time()
 
 # parse config file
 config_file = sys.argv[1]
@@ -28,29 +36,31 @@ cfg, model, optim = parse_config(config_file)
 tf = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (1.0))])
 trainset = MNIST("./data", train=True, download=True, transform=tf)
 testset = MNIST("./data", train=False, download=True, transform=tf)
-train_loader = DataLoader(trainset, batch_size=cfg['batch_size'], shuffle=True, drop_last=True)
-test_loader = DataLoader(testset, batch_size=cfg['batch_size'], shuffle=False, drop_last=False)
+train_loader = DataLoader(trainset, batch_size=cfg["batch_size"], shuffle=True, drop_last=True)
+test_loader = DataLoader(testset, batch_size=cfg["batch_size"], shuffle=False, drop_last=False)
 
 # create directory to save model state dict, samples, logs and config file
-results_dir = os.path.join("./models", cfg['model_name'])
+results_dir = os.path.join("./models", cfg["model_name"])
 os.makedirs(os.path.join(results_dir, "samples"), exist_ok=True)
 
 # save config file in results directory for safety
 with open(os.path.join(results_dir, "config.ini"), "w") as f:
-    f.write(open(config_file, 'r').read())
+    f.write(open(config_file, "r").read())
 
 # use accelerator if specified in config file
-if cfg['use_accelerator']:
+if cfg["use_accelerator"]:
     accelerator = Accelerator()
     model, optim, train_loader, test_loader = accelerator.prepare(model, optim, train_loader, test_loader)
     device = accelerator.device
 else:
-    device = torch.device('cpu')
+    device = torch.device("cpu")
+
+print(f"\nDevice: {device}\n")
 
 # train model
-metric_logger = {'train_loss': [], 'test_loss': []}
+metric_logger = {"train_loss": [], "test_loss": []}
 losses = []
-for i in range(cfg['n_epochs']):
+for i in range(cfg["n_epochs"]):
     model.train()
 
     total_loss = 0
@@ -66,12 +76,11 @@ for i in range(cfg['n_epochs']):
         total_loss += loss.item()
 
     train_loss = total_loss / len(train_loader)
-    metric_logger['train_loss'].append(train_loss)
+    metric_logger["train_loss"].append(train_loss)
     print(f"Epoch {i+1}/{cfg['n_epochs']}: Train Loss: {train_loss}")
 
     model.eval()
     with torch.no_grad():
-
         # obtain average test loss
         total_loss = 0
         for x, _ in tqdm(test_loader):
@@ -80,18 +89,19 @@ for i in range(cfg['n_epochs']):
         test_loss = total_loss / len(test_loader)
 
         # sample from model
-        xh = model.sample(n_sample=16, img_shape=(1, 28, 28), device=device) 
+        xh = model.sample(n_sample=16, img_shape=(1, 28, 28), device=device)
         grid = make_grid(xh, nrow=4)
 
         # save samples
-        save_image(grid, os.path.join(results_dir, 'samples', f"epoch_{i:04d}.png"))
+        save_image(grid, os.path.join(results_dir, "samples", f"epoch_{i: 04d}.png"))
 
         # save model
         torch.save(model.state_dict(), os.path.join(results_dir, "state_dict.pth"))
 
     # log and save losses
-    metric_logger['test_loss'].append(test_loss)
+    metric_logger["test_loss"].append(test_loss)
     print(f"Epoch {i+1}/{cfg['n_epochs']}: Test Loss: {test_loss}")
     with open(os.path.join(results_dir, "log.pkl"), "wb") as f:
         pickle.dump(metric_logger, f)
 
+print(f"Time taken: {time() - t0: .2f} seconds")
