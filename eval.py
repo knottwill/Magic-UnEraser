@@ -101,4 +101,4 @@ fid.update(transform_for_inceptionv3(x_gen), real=False)
 fid_score = fid.compute()
 print(f"FID score: {fid_score}")
 
-print(f"Time taken: {time()-t0: .2f} seconds")
+print(f"Time taken: {time()-t0:.2f} seconds")

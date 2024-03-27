@@ -93,7 +93,7 @@ for i in range(cfg["n_epochs"]):
         grid = make_grid(xh, nrow=4)
 
         # save samples
-        save_image(grid, os.path.join(results_dir, "samples", f"epoch_{i: 04d}.png"))
+        save_image(grid, os.path.join(results_dir, "samples", f"epoch_{i:04d}.png"))
 
         # save model
         torch.save(model.state_dict(), os.path.join(results_dir, "state_dict.pth"))
@@ -104,4 +104,4 @@ for i in range(cfg["n_epochs"]):
     with open(os.path.join(results_dir, "log.pkl"), "wb") as f:
         pickle.dump(metric_logger, f)
 
-print(f"Time taken: {time() - t0: .2f} seconds")
+print(f"Time taken: {time() - t0:.2f} seconds")

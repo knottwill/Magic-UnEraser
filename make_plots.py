@@ -67,8 +67,8 @@ for model_name in models:
 
         # print final train and test loss
         print(f"Model: {model_name}")
-        print(f"Final train loss: {metric_logger['train_loss'][-1]: .4f}")
-        print(f"Final test loss: {metric_logger['test_loss'][-1]: .4f}\n")
+        print(f"Final train loss: {metric_logger['train_loss'][-1]:.4f}")
+        print(f"Final test loss: {metric_logger['test_loss'][-1]:.4f}\n")
 
     # plotting samples over the training process at epochs 1, 5, 10, 30
 
@@ -76,7 +76,7 @@ for model_name in models:
     letters = ["(a)", "(b)", "(c)", "(d)"]
     fig, axs = plt.subplots(1, len(epochs), figsize=(10, 5))
     for i, epoch in enumerate(epochs):
-        path = join(args.models, model_name, "samples", f"epoch_{epoch - 1: 04d}.png")
+        path = join(args.models, model_name, "samples", f"epoch_{epoch - 1:04d}.png")
         img = Image.open(path)
         axs[i].imshow(img)
         axs[i].axis("off")
