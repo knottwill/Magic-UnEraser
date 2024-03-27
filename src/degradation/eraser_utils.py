@@ -1,11 +1,12 @@
-"""!
+"""!@file eraser_utils.py
 @brief Contains all utility functions for the Eraser Degredation Operator
 """
-from skimage.draw import line 
+from skimage.draw import line
+
 # from skimage.morphology import disk
 import numpy as np
-import matplotlib.pyplot as plt
 import torch
+
 
 def get_zigzag_trajectory(left, top, bottom, right, size=28):
     """!
@@ -13,9 +14,9 @@ def get_zigzag_trajectory(left, top, bottom, right, size=28):
 
     @details The trajectory consists of a series of points on the edges of the image that the eraser moves between
     in straight lines. The points are defined by intersections with `left`, `top`, `bottom`, and `right` edges.
-    The eraser moves from the first point in `left` to the first point in `top`, then to the 
+    The eraser moves from the first point in `left` to the first point in `top`, then to the
     second point in `left`, and so on until the last point in `top`. Then it moves to the first point in `bottom`,
-    then `right`, and so on until it has completed the full trajectory. 
+    then `right`, and so on until it has completed the full trajectory.
     """
     trajectory = []
     for r, c in zip(left, top):
@@ -23,6 +24,7 @@ def get_zigzag_trajectory(left, top, bottom, right, size=28):
     for r, c in zip(right, bottom):
         trajectory += [(size - 1, c), (r, size - 1)]
     return trajectory
+
 
 def eraser_trajectory(radius):
     """!
@@ -43,11 +45,12 @@ def eraser_trajectory(radius):
     elif radius == 3:
         left = np.array([3, 10, 17, 24])
         top = left + 1
-        bottom = top 
+        bottom = top
         right = left + 2
     else:
         raise ValueError("Disk radius not supported")
     return get_zigzag_trajectory(left, top, bottom, right)
+
 
 def all_pixels_in_trajectory(trajectory: list):
     """!
@@ -71,6 +74,7 @@ def all_pixels_in_trajectory(trajectory: list):
     final_pixels = torch.tensor(final_pixels)
     return final_pixels
 
+
 def disk_mask(pixel, radius, size):
     """!
     @brief Generates a solid disk mask for the center of the eraser head.
@@ -79,18 +83,19 @@ def disk_mask(pixel, radius, size):
     @param pixel: A tensor (row, column) representing the center of the disk.
     @param radius: The radius of the disk.
     @param size: The size of the image.
-    
+
     @return: A tensor of shape (1, size, size) containing the mask.
     """
     # create meshgrid
-    rr, cc = torch.meshgrid(torch.arange(size), torch.arange(size), indexing='ij')
+    rr, cc = torch.meshgrid(torch.arange(size), torch.arange(size), indexing="ij")
 
     # calculate distance from center
-    distance = ((rr - pixel[0])**2 + (cc - pixel[1])**2).float().sqrt()
+    distance = ((rr - pixel[0]) ** 2 + (cc - pixel[1]) ** 2).float().sqrt()
 
     # create mask
     mask = (distance > radius).float().unsqueeze(0)
     return mask
+
 
 def gaussian_mask(pixel, sigma, size):
     """!
@@ -100,12 +105,12 @@ def gaussian_mask(pixel, sigma, size):
     @param pixel: A tensor (row, column) representing the center of the mask.
     @param sigma: The standard deviation of the Gaussian distribution.
     @param size: The size of the image.
-    
+
     @return: A tensor of shape (1, size, size) containing the Gaussian mask.
     """
 
     # create meshgrid
-    rr, cc = torch.meshgrid(torch.arange(size), torch.arange(size), indexing='ij')
+    rr, cc = torch.meshgrid(torch.arange(size), torch.arange(size), indexing="ij")
 
     # calculate gaussian mask
     dY = rr - pixel[0]
@@ -113,6 +118,7 @@ def gaussian_mask(pixel, sigma, size):
     exp_part = torch.exp(-0.5 * (dX**2 + dY**2) / (sigma**2))
     gaussian_mask = 1 - exp_part
     return gaussian_mask.unsqueeze(0)
+
 
 def eraserhead_masks(pixels: torch.Tensor, radius: int = 3, sigma: float = 3, size: int = 28) -> torch.Tensor:
     """!
@@ -132,9 +138,9 @@ def eraserhead_masks(pixels: torch.Tensor, radius: int = 3, sigma: float = 3, si
 
     masks = torch.tensor([])
     for pixel in pixels:
-        disk = disk_mask(pixel, radius, size) # solid disk
-        gaussian = gaussian_mask(pixel, sigma, size) # gaussian falloff
-        mask = disk * gaussian # combine the two masks
+        disk = disk_mask(pixel, radius, size)  # solid disk
+        gaussian = gaussian_mask(pixel, sigma, size)  # gaussian falloff
+        mask = disk * gaussian  # combine the two masks
         masks = torch.cat((masks, mask.unsqueeze(0)))
 
     return masks
