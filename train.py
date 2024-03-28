@@ -23,13 +23,15 @@ from time import time
 
 from src.config_parsing import parse_config
 
-SEED = 42
+t0 = time()  # timing
+config_file = sys.argv[1]  # config file
+
+# set seed
+SEED = 14 + len(config_file)
 torch.manual_seed(SEED)
 np.random.seed(SEED)
-t0 = time()
 
 # parse config file
-config_file = sys.argv[1]
 cfg, model, optim = parse_config(config_file)
 
 # load data
