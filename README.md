@@ -6,7 +6,7 @@
 
 ## Description
 
-In this project we train a diffusion model to generate handwritten digits by reversing the custom 'Eraser' image degradation process. As a baseline, we also train two denoising diffusion probabilistic models (DDPM - standard diffusion).
+In this project we train a cold diffusion model to generate handwritten digits by reversing the custom 'Eraser' image degradation process. As a baseline, we also train two denoising diffusion probabilistic models (DDPM - standard diffusion).
 
 <details open>
 <summary><b>Toggle Degradation/Reconstruction</b></summary>
