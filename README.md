@@ -9,18 +9,12 @@
 In this project we train a cold diffusion model to generate handwritten digits by reversing the custom 'Eraser' image degradation process. As a baseline, we also train two denoising diffusion probabilistic models (DDPM - standard diffusion).
 
 <details open>
-<summary><b>Toggle Degradation/Reconstruction</b></summary>
+<summary><b>Toggle Degradation/Generation</b></summary>
 <br>
-<div style="display: flex; justify-content: flex-start; gap: 100px;">
-    <div style="text-align: center;">
-        <p style="font-size: 18px; font-family: Arial, sans-serif; color: red; margin-bottom: 20px;">Degradation</p>
-        <img id="degradationGif" src="plots/degradation.gif" alt="Degradation" style="width: 200px;">
-    </div>
-    <div style="text-align: center;">
-        <p style="font-size: 18px; font-family: Arial, sans-serif; color: green; margin-bottom: 20px;">Generation</p>
-        <img id="reconstructionGif" src="plots/reconstruction.gif" alt="Reconstruction" style="width: 200px;">
-    </div>
-</div>
+
+| Degradation | Generation |
+|:-:|:-:|
+| ![Degradation](plots/degradation.gif) | ![Generation](plots/reconstruction.gif) |
 </details>
 
 <br>
